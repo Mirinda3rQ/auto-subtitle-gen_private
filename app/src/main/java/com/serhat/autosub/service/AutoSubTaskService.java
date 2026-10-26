@@ -24,6 +24,7 @@ import com.arthenica.ffmpegkit.FFmpegKit;
 import com.serhat.autosub.R;
 import com.serhat.autosub.core.ApplicationPath;
 import com.serhat.autosub.core.NotificationHelper;
+import com.serhat.autosub.core.SecretStore;
 import com.serhat.autosub.exports.ExportRecord;
 import com.serhat.autosub.exports.ExportStore;
 import com.serhat.autosub.models.GemmaModelManager;
@@ -82,6 +83,10 @@ public class AutoSubTaskService extends Service {
     private static final String KEY_TRANSLATE_SUBTITLES = "translate_subtitles";
     private static final String KEY_TRANSLATION_SOURCE_LANGUAGE = "translation_source_language";
     private static final String KEY_TRANSLATION_TARGET_LANGUAGE = "translation_target_language";
+    private static final String KEY_GEMINI_TRANSLATION = "gemini_subtitle_translation";
+    private static final String KEY_GEMINI_CORRECTION = "gemini_low_confidence_review";
+    private static final String KEY_GEMINI_CONTEXT = "gemini_translation_context";
+    private static final String KEY_GEMINI_PROMPT = "gemini_translation_prompt";
     private static final String KEY_SHOW_COMPLETION_NOTIFICATIONS = "show_completion_notifications";
 
     private final IBinder binder = new LocalBinder();
@@ -1260,6 +1265,10 @@ public class AutoSubTaskService extends Service {
                 KEY_WHISPER_VAD_AGGRESSIVENESS, SubtitleGenerator.VAD_AGGRESSIVENESS_NORMAL));
         subtitleGenerator.setWhisperLanguage(settingsPrefs.getString(KEY_WHISPER_LANGUAGE, "auto"));
         subtitleGenerator.setWhisperThreadCount(settingsPrefs.getInt(KEY_WHISPER_THREAD_COUNT, 0));
+        SecretStore secretStore = new SecretStore(this);
+        subtitleGenerator.setGeminiSettings(settingsPrefs.getBoolean(KEY_GEMINI_TRANSLATION, false),
+                settingsPrefs.getBoolean(KEY_GEMINI_CORRECTION, false), secretStore.getGeminiApiKey(),
+                settingsPrefs.getString(KEY_GEMINI_CONTEXT, ""), settingsPrefs.getString(KEY_GEMINI_PROMPT, ""));
         subtitleGenerator.setTranslationSettings(
                 settingsPrefs.getBoolean(KEY_TRANSLATE_SUBTITLES, false),
                 settingsPrefs.getString(KEY_TRANSLATION_SOURCE_LANGUAGE, "auto"),
@@ -1279,6 +1288,11 @@ public class AutoSubTaskService extends Service {
                     queueItem.setPreviewText(getPreviewTextHelper(partialSubtitles));
                     publishQueueItems(queueItem);
                 });
+            }
+
+            @Override
+            public void onWarning(String warning) {
+                handler.post(() -> android.widget.Toast.makeText(getApplicationContext(), warning, android.widget.Toast.LENGTH_LONG).show());
             }
 
             @Override
