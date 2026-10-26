@@ -316,7 +316,7 @@ public class MainActivity extends AppCompatActivity {
             android.widget.Toast.makeText(this, "Speech model is still loading", android.widget.Toast.LENGTH_SHORT).show();
             return;
         }
-        pickMultipleMedia.launch(new String[]{"video/*"});
+        pickMultipleMedia.launch(new String[]{"video/*", "audio/*"});
     }
 
     private void addVideosToQueue(List<Uri> uris) {
