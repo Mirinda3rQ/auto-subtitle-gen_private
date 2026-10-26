@@ -830,7 +830,7 @@ public class GenerateFragment extends Fragment implements ActionMode.Callback {
             Toast.makeText(requireContext(), "Speech model is still loading", Toast.LENGTH_SHORT).show();
             return;
         }
-        pickMultipleMedia.launch(new String[]{"video/*"});
+        pickMultipleMedia.launch(new String[]{"video/*", "audio/*"});
     }
 
     private void addVideosToQueue(List<Uri> uris) {
