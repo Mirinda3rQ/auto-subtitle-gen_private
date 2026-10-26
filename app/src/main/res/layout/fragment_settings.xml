@@ -222,6 +222,79 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:text="Gemini subtitle options"
+                android:textSize="18sp"
+                android:textStyle="bold" />
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="6dp"
+                android:alpha="0.75"
+                android:text="Gemini translation sends subtitle text. Audio review sends only low-confidence, poorly aligned, gappy, or repeated nearby clips with their Whisper text to Google. Gemini use consumes your quota and may incur charges."
+                android:textSize="13sp" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/geminiTranslationSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Use Gemini for subtitle translation" />
+
+            <com.google.android.material.materialswitch.MaterialSwitch
+                android:id="@+id/geminiCorrectionSwitch"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Review low-confidence Japanese audio" />
+
+            <EditText
+                android:id="@+id/geminiApiKeyET"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:hint="Gemini API key"
+                android:inputType="textPassword|textNoSuggestions"
+                android:singleLine="true" />
+
+            <EditText
+                android:id="@+id/geminiContextET"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:hint="Translation context (names, setting, tone)"
+                android:inputType="textMultiLine|textCapSentences"
+                android:minLines="2" />
+
+            <EditText
+                android:id="@+id/geminiPromptET"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:gravity="top|start"
+                android:hint="Additional translation instructions"
+                android:inputType="textMultiLine|textCapSentences"
+                android:minLines="2" />
+
+            <com.google.android.material.button.MaterialButton
+                android:id="@+id/saveGeminiSettingsBT"
+                style="@style/Widget.Material3.Button.OutlinedButton"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:text="Save Gemini settings" />
+        </LinearLayout>
+    </com.google.android.material.card.MaterialCardView>
+
+    <com.google.android.material.card.MaterialCardView
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_marginTop="12dp">
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            android:padding="16dp">
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:text="Export location"
                 android:textSize="18sp"
                 android:textStyle="bold" />
