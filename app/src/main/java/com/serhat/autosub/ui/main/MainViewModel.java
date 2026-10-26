@@ -21,6 +21,7 @@ import com.serhat.autosub.R;
 import com.serhat.autosub.core.ApplicationPath;
 import com.serhat.autosub.core.DebugLog;
 import com.serhat.autosub.core.NotificationHelper;
+import com.serhat.autosub.core.SecretStore;
 import com.serhat.autosub.exports.ExportRecord;
 import com.serhat.autosub.exports.ExportStore;
 import com.serhat.autosub.models.GemmaModelManager;
@@ -89,10 +90,15 @@ public class MainViewModel extends AndroidViewModel {
     private static final String KEY_TRANSLATE_SUBTITLES = "translate_subtitles";
     private static final String KEY_TRANSLATION_SOURCE_LANGUAGE = "translation_source_language";
     private static final String KEY_TRANSLATION_TARGET_LANGUAGE = "translation_target_language";
+    private static final String KEY_GEMINI_TRANSLATION = "gemini_subtitle_translation";
+    private static final String KEY_GEMINI_CORRECTION = "gemini_low_confidence_review";
+    private static final String KEY_GEMINI_CONTEXT = "gemini_translation_context";
+    private static final String KEY_GEMINI_PROMPT = "gemini_translation_prompt";
     private static final String KEY_SHOW_COMPLETION_NOTIFICATIONS = "show_completion_notifications";
     private static final String KEY_SHOW_RAM_USAGE = "show_ram_usage";
     private static final String KEY_SHORTS_SMOOTH_AUTO_FRAMING = "shorts_smooth_auto_framing";
     private final android.content.SharedPreferences settingsPrefs;
+    private final SecretStore secretStore;
 
     // --- State LiveData ---
     private final MutableLiveData<Boolean> modelReady = new MutableLiveData<>(false);
@@ -288,6 +294,7 @@ public class MainViewModel extends AndroidViewModel {
         gemmaModelManager = new GemmaModelManager(application);
         shortsProjectStore = new ShortsProjectStore(application);
         settingsPrefs = application.getSharedPreferences(PREFS_SETTINGS, android.content.Context.MODE_PRIVATE);
+        secretStore = new SecretStore(application);
         loadSettings();
 
         bindTaskService();
@@ -439,6 +446,22 @@ public class MainViewModel extends AndroidViewModel {
     public LiveData<Boolean> getTranslateSubtitles() { return translateSubtitles; }
     public LiveData<String> getTranslationSourceLanguage() { return translationSourceLanguage; }
     public LiveData<String> getTranslationTargetLanguage() { return translationTargetLanguage; }
+    public boolean isGeminiTranslationEnabled() { return settingsPrefs.getBoolean(KEY_GEMINI_TRANSLATION, false); }
+    public boolean isGeminiCorrectionEnabled() { return settingsPrefs.getBoolean(KEY_GEMINI_CORRECTION, false); }
+    public String getGeminiApiKey() { return secretStore.getGeminiApiKey(); }
+    public String getGeminiContext() { return settingsPrefs.getString(KEY_GEMINI_CONTEXT, ""); }
+    public String getGeminiPrompt() { return settingsPrefs.getString(KEY_GEMINI_PROMPT, ""); }
+
+    public void setGeminiSubtitleSettings(boolean useGeminiTranslation, boolean reviewLowConfidenceAudio,
+                                          String apiKey, String context, String prompt) {
+        try { secretStore.saveGeminiApiKey(apiKey); }
+        catch (Exception e) { DebugLog.e("MainViewModel", "Failed to encrypt Gemini API key", e); return; }
+        settingsPrefs.edit().putBoolean(KEY_GEMINI_TRANSLATION, useGeminiTranslation)
+                .putBoolean(KEY_GEMINI_CORRECTION, reviewLowConfidenceAudio)
+                .putString(KEY_GEMINI_CONTEXT, context == null ? "" : context.trim())
+                .putString(KEY_GEMINI_PROMPT, prompt == null ? "" : prompt.trim()).apply();
+        subtitleGenerator.setGeminiSettings(useGeminiTranslation, reviewLowConfidenceAudio, apiKey, context, prompt);
+    }
     public LiveData<Float> getShortsCaptionSize() { return shortsCaptionSize; }
     public LiveData<Boolean> getShortsUppercase() { return shortsUppercase; }
     public LiveData<Boolean> getShortsWordByWordDefault() { return shortsWordByWordDefault; }
@@ -499,6 +522,9 @@ public class MainViewModel extends AndroidViewModel {
         translationSourceLanguage.setValue(savedTranslationSource);
         translationTargetLanguage.setValue(savedTranslationTarget);
         subtitleGenerator.setTranslationSettings(savedTranslateSubtitles, savedTranslationSource, savedTranslationTarget);
+        subtitleGenerator.setGeminiSettings(settingsPrefs.getBoolean(KEY_GEMINI_TRANSLATION, false),
+                settingsPrefs.getBoolean(KEY_GEMINI_CORRECTION, false), secretStore.getGeminiApiKey(),
+                settingsPrefs.getString(KEY_GEMINI_CONTEXT, ""), settingsPrefs.getString(KEY_GEMINI_PROMPT, ""));
         shortsWordByWordDefault.setValue(settingsPrefs.getBoolean(KEY_SHORTS_MODE_WORD_BY_WORD, false));
         skipShortsDialog.setValue(settingsPrefs.getBoolean(KEY_SHORTS_DONT_SHOW_AGAIN, false));
         showCompletionNotifications.setValue(settingsPrefs.getBoolean(KEY_SHOW_COMPLETION_NOTIFICATIONS, true));
@@ -1505,6 +1531,9 @@ public class MainViewModel extends AndroidViewModel {
                 KEY_WHISPER_VAD_AGGRESSIVENESS, SubtitleGenerator.VAD_AGGRESSIVENESS_NORMAL));
         subtitleGenerator.setWhisperLanguage(settingsPrefs.getString(KEY_WHISPER_LANGUAGE, "auto"));
         subtitleGenerator.setWhisperThreadCount(settingsPrefs.getInt(KEY_WHISPER_THREAD_COUNT, 0));
+        subtitleGenerator.setGeminiSettings(settingsPrefs.getBoolean(KEY_GEMINI_TRANSLATION, false),
+                settingsPrefs.getBoolean(KEY_GEMINI_CORRECTION, false), secretStore.getGeminiApiKey(),
+                settingsPrefs.getString(KEY_GEMINI_CONTEXT, ""), settingsPrefs.getString(KEY_GEMINI_PROMPT, ""));
         subtitleGenerator.setTranslationSettings(
                 settingsPrefs.getBoolean(KEY_TRANSLATE_SUBTITLES, false),
                 settingsPrefs.getString(KEY_TRANSLATION_SOURCE_LANGUAGE, "auto"),
@@ -1525,6 +1554,11 @@ public class MainViewModel extends AndroidViewModel {
                     }
                     refreshQueue();
                 });
+            }
+
+            @Override
+            public void onWarning(String warning) {
+                handler.post(() -> android.widget.Toast.makeText(getApplication(), warning, android.widget.Toast.LENGTH_LONG).show());
             }
 
             @Override
