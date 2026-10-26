@@ -127,7 +127,8 @@ public class SettingsFragment extends Fragment {
             "Persian",
             "Greek",
             "Swedish",
-            "Czech"
+            "Czech",
+            "Thai"
     };
 
     private static final String[] TRANSLATION_SOURCE_LANGUAGE_CODES = {
@@ -152,7 +153,8 @@ public class SettingsFragment extends Fragment {
             "fa",
             "el",
             "sv",
-            "cs"
+            "cs",
+            "th"
     };
 
     private static final String[] TRANSLATION_TARGET_LANGUAGE_LABELS = {
@@ -176,7 +178,8 @@ public class SettingsFragment extends Fragment {
             "Persian",
             "Greek",
             "Swedish",
-            "Czech"
+            "Czech",
+            "Thai"
     };
 
     private static final String[] TRANSLATION_TARGET_LANGUAGE_CODES = {
@@ -200,7 +203,8 @@ public class SettingsFragment extends Fragment {
             "fa",
             "el",
             "sv",
-            "cs"
+            "cs",
+            "th"
     };
 
     @Nullable
@@ -216,6 +220,19 @@ public class SettingsFragment extends Fragment {
         viewModel = new ViewModelProvider(requireActivity()).get(MainViewModel.class);
 
         setupActions();
+        binding.geminiTranslationSwitch.setChecked(viewModel.isGeminiTranslationEnabled());
+        binding.geminiCorrectionSwitch.setChecked(viewModel.isGeminiCorrectionEnabled());
+        binding.geminiApiKeyET.setText(viewModel.getGeminiApiKey());
+        binding.geminiContextET.setText(viewModel.getGeminiContext());
+        binding.geminiPromptET.setText(viewModel.getGeminiPrompt());
+        binding.saveGeminiSettingsBT.setOnClickListener(v -> {
+            viewModel.setGeminiSubtitleSettings(binding.geminiTranslationSwitch.isChecked(),
+                    binding.geminiCorrectionSwitch.isChecked(),
+                    binding.geminiApiKeyET.getText() == null ? "" : binding.geminiApiKeyET.getText().toString(),
+                    binding.geminiContextET.getText() == null ? "" : binding.geminiContextET.getText().toString(),
+                    binding.geminiPromptET.getText() == null ? "" : binding.geminiPromptET.getText().toString());
+            android.widget.Toast.makeText(requireContext(), "Gemini subtitle settings saved", android.widget.Toast.LENGTH_SHORT).show();
+        });
         observeViewModel();
     }
 
