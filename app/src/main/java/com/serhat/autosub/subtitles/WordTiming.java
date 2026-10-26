@@ -5,27 +5,19 @@ public class WordTiming {
     private final long startMs;
     private final long endMs;
     private final double confidence;
+    private final boolean audioAligned;
 
     public WordTiming(String word, long startMs, long endMs, double confidence) {
-        this.word = word;
-        this.startMs = startMs;
-        this.endMs = endMs;
-        this.confidence = confidence;
+        this(word, startMs, endMs, confidence, false);
     }
 
-    public String getWord() {
-        return word;
+    public WordTiming(String word, long startMs, long endMs, double confidence, boolean audioAligned) {
+        this.word = word; this.startMs = startMs; this.endMs = endMs;
+        this.confidence = confidence; this.audioAligned = audioAligned;
     }
-
-    public long getStartMs() {
-        return startMs;
-    }
-
-    public long getEndMs() {
-        return endMs;
-    }
-
-    public double getConfidence() {
-        return confidence;
-    }
+    public String getWord() { return word; }
+    public long getStartMs() { return startMs; }
+    public long getEndMs() { return endMs; }
+    public double getConfidence() { return confidence; }
+    public boolean isAudioAligned() { return audioAligned; }
 }
