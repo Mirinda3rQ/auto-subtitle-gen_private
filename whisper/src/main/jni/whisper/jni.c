@@ -373,11 +373,9 @@ static char *build_token_timings_json(struct whisper_context *ctx, int segment_i
         const struct whisper_token_data token = whisper_full_get_token_data(ctx, segment_id, token_index);
         tokens[token_index] = token;
         next_dtw_times[token_index] = -1;
-        if (token.id < eot && token.t_dtw > previous_dtw) {
-            if (previous_dtw >= 0) {
-                has_dtw_timings = true;
-            }
-            previous_dtw = token.t_dtw;
+        if (token.id < eot && token.t_dtw >= 0) {
+            has_dtw_timings = true;
+            if (token.t_dtw > previous_dtw) previous_dtw = token.t_dtw;
         }
     }
 
@@ -438,10 +436,11 @@ static char *build_token_timings_json(struct whisper_context *ctx, int segment_i
         snprintf(
                 numbers,
                 sizeof(numbers),
-                ",\"startMs\":%lld,\"endMs\":%lld,\"confidence\":%.6f}",
+                ",\"startMs\":%lld,\"endMs\":%lld,\"confidence\":%.6f,\"aligned\":%s}",
                 (long long) token_t0 * 10,
                 (long long) token_t1 * 10,
-                token.p
+                token.p,
+                use_dtw ? "true" : "false"
         );
         if (!json_builder_append(&builder, numbers)) {
             free(tokens);
